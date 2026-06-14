@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Road to Ironman — Training Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#EAEEF3; --panel:#FFFFFF; --ink:#161C26; --ink-2:#3A4452; --muted:#8A93A2;
+    --line:#DCE2EA; --line-2:#ECEFF4; --band:#141A24; --band-2:#1F2735;
+    --swim:#1F95C2; --bike:#2E9E6B; --run:#E0743A; --strength:#7C5CC4;
+    --neutral:#8A93A2; --nutrition:#C29B22; --recovery:#5C6675; --race:#D7263D;
+    --ring-empty:#E2E7EE; --good:#2E9E6B;
+    --shadow:0 1px 2px rgba(20,26,36,.05),0 8px 24px rgba(20,26,36,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 18px 64px}
+
+  /* Top band */
+  .band{background:var(--band);color:#fff}
+  .band-inner{max-width:1180px;margin:0 auto;padding:22px 18px 24px;display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;justify-content:space-between}
+  .brand{display:flex;flex-direction:column;gap:6px}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#7E8AA0}
+  .brand h1{font-family:'Archivo';font-weight:800;font-size:30px;letter-spacing:-.02em;margin:0;line-height:1}
+  .phase-pill{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:4px;padding:5px 11px;border-radius:999px;background:var(--band-2);font-size:12.5px;font-weight:500}
+  .phase-dot{width:8px;height:8px;border-radius:50%}
+  .clock{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .clock .lab{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#7E8AA0}
+  .clock .big{font-family:'Space Mono',monospace;font-weight:700;font-size:40px;line-height:1}
+  .clock .big small{font-size:15px;color:#9AA4B6;font-weight:400;margin-left:6px}
+
+  /* Tabs */
+  .tabbar{background:var(--band-2)}
+  .tabbar-inner{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:4px}
+  .tab{appearance:none;border:none;background:transparent;color:#9AA4B6;cursor:pointer;font-family:'Inter';font-weight:600;font-size:14px;padding:14px 18px;border-bottom:3px solid transparent;transition:.15s}
+  .tab:hover{color:#cfd6e2}
+  .tab.active{color:#fff;border-bottom-color:var(--swim)}
+  .tab.active.nutri{border-bottom-color:var(--nutrition)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0 20px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .k{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .stat .v{font-family:'Archivo';font-weight:700;font-size:23px}
+  .stat .v small{font-size:13px;color:var(--muted);font-weight:500;font-family:'Inter'}
+  .bar{height:7px;border-radius:999px;background:var(--ring-empty);margin-top:9px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:var(--good);border-radius:999px;transition:width .35s ease}
+
+  .grid{display:grid;grid-template-columns:1fr 372px;gap:20px;align-items:start}
+
+  /* Calendar */
+  .cal{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line-2)}
+  .cal-head h2{font-family:'Archivo';font-weight:700;font-size:18px;margin:0}
+  .nav{display:flex;gap:8px;align-items:center}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-family:'Inter';font-size:13px;font-weight:500;border-radius:9px;padding:7px 12px;transition:.15s}
+  .btn:hover{background:var(--line-2)}
+  .btn.icon{width:34px;height:34px;padding:0;font-size:17px;line-height:1;display:grid;place-items:center}
+  .btn:focus-visible,.day:focus-visible,.chk:focus-visible,.tab:focus-visible{outline:2px solid var(--swim);outline-offset:2px}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);padding:8px 10px 2px}
+  .dow span{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:8px 10px 14px}
+  .day{position:relative;min-height:74px;border:1px solid var(--line-2);border-radius:11px;background:#fff;cursor:pointer;padding:7px 8px 8px;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;gap:5px;transition:.12s}
+  .day:hover{border-color:var(--line);background:#FAFBFC}
+  .day.out{background:#F4F6F9;border-color:transparent;cursor:default;opacity:.55}
+  .day.out:hover{background:#F4F6F9}
+  .day.empty{cursor:default}
+  .day.empty:hover{background:#fff;border-color:var(--line-2)}
+  .day.today{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink) inset}
+  .day.sel{border-color:var(--swim);box-shadow:0 0 0 2px var(--swim) inset}
+  .day.race{background:#FCEBEC;border-color:#F2B8BD}
+  .dnum{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--ink-2)}
+  .day.today .dnum{color:var(--ink)}
+  .ticks{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto}
+  .tick{height:4px;width:15px;border-radius:2px;opacity:.92}
+  .ring{position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
+  .ring i{width:9px;height:9px;border-radius:50%;background:#fff}
+  .ring.done{background:var(--good)!important}
+  .ring.done::after{content:"\2713";color:#fff;font-size:11px;font-weight:700;position:absolute}
+  .ring.done i{display:none}
+  .rlabel{font-family:'Space Mono',monospace;font-size:9px;color:#B8313D;font-weight:700;text-transform:uppercase}
+
+  /* Day panel */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);position:sticky;top:18px;overflow:hidden}
+  .p-head{padding:16px 18px;border-bottom:1px solid var(--line-2)}
+  .p-date{font-family:'Archivo';font-weight:700;font-size:19px}
+  .p-sub{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:9px}
+  .badge{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--line-2);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+  .badge .d{width:7px;height:7px;border-radius:50%}
+  .badge.warn{background:#FBF3DC;color:#8A6D12}
+  .p-close{display:none}
+  .p-body{padding:8px 12px 14px;max-height:62vh;overflow:auto}
+  .grp{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:14px 8px 6px}
+  .item{display:flex;gap:11px;padding:10px;border-radius:11px;align-items:flex-start;transition:.12s}
+  .item:hover{background:var(--line-2)}
+  .item.checked .it-title{text-decoration:line-through;color:var(--muted)}
+  .chk{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:21px;height:21px;margin-top:1px;border:2px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;position:relative;transition:.12s}
+  .chk:checked{background:var(--good);border-color:var(--good)}
+  .chk:checked::after{content:"\2713";color:#fff;font-size:13px;font-weight:700;position:absolute;top:50%;left:50%;transform:translate(-50%,-52%)}
+  .it-main{flex:1;min-width:0}
+  .it-title{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .kdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .it-chip{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-2);font-weight:700;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:auto}
+  .it-detail{font-size:12.8px;color:var(--ink-2);margin-top:3px;line-height:1.4}
+  .p-foot{padding:13px 18px;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .p-foot .pct{font-family:'Space Mono',monospace;font-weight:700;font-size:14px}
+  .empty-note{padding:34px 22px;text-align:center;color:var(--muted);font-size:14px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:7px 16px;margin:18px 2px 0}
+  .lg{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2)}
+  .lg .d{width:10px;height:10px;border-radius:3px}
+  .foot-note{margin:22px 2px 0;font-size:12px;color:var(--muted);max-width:760px;line-height:1.55}
+
+  /* Nutrition tab */
+  .nut{display:none}
+  .nut.active{display:block}
+  .sched.hide{display:none}
+  .nut h2{font-family:'Archivo';font-weight:800;font-size:24px;letter-spacing:-.01em;margin:24px 0 4px}
+  .nut .lede{color:var(--ink-2);max-width:740px;margin:0 0 18px;font-size:14.5px}
+  .seclab{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--nutrition);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+  .seclab::after{content:"";flex:1;height:1px;background:var(--line)}
+  .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .ncard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .ncard h3{font-family:'Archivo';font-weight:700;font-size:15px;margin:0 0 10px}
+  .ncard .row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line-2)}
+  .ncard .row:last-child{border-bottom:none}
+  .ncard .row b{font-family:'Space Mono',monospace}
+  .millets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .mcard{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--nutrition);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
+  .mcard h4{margin:0 0 4px;font-family:'Archivo';font-weight:700;font-size:14px}
+  .mcard p{margin:0;font-size:12.8px;color:var(--ink-2);line-height:1.45}
+  .meals{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .meal{display:flex;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line-2)}
+  .meal:last-child{border-bottom:none}
+  .meal .when{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;width:104px;flex:0 0 auto;padding-top:2px}
+  .meal .what{flex:1}
+  .meal .what b{font-size:14px}
+  .meal .what p{margin:3px 0 0;font-size:13px;color:var(--ink-2);line-height:1.5}
+  .meal .pg{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--bike);border:1px solid #BFE3CF;background:#EEFAF2;border-radius:6px;padding:2px 7px;height:fit-content;white-space:nowrap}
+  table.fuel{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);font-size:13px}
+  table.fuel th,table.fuel td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line-2)}
+  table.fuel th{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:#F8FAFC}
+  table.fuel tr:last-child td{border-bottom:none}
+  table.fuel td b{font-family:'Space Mono',monospace}
+  .note-card{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:15px 17px;font-size:13px;color:var(--ink-2);line-height:1.55}
+  .note-card b{color:var(--ink)}
+
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .cards3{grid-template-columns:1fr}
+    .panel{position:fixed;inset:0;z-index:50;border-radius:0;display:none;flex-direction:column}
+    body.panel-open .panel{display:flex}
+    body.panel-open{overflow:hidden}
+    .panel::before{content:"";position:fixed;inset:0;background:rgba(20,26,36,.4);z-index:-1}
+    .p-body{max-height:none;flex:1}
+    .p-close{display:grid;place-items:center;position:absolute;top:13px;right:14px;width:34px;height:34px;border:none;background:var(--line-2);border-radius:9px;font-size:20px;cursor:pointer;color:var(--ink)}
+    .meal{flex-wrap:wrap}.meal .when{width:100%}
+  }
+  @media(max-width:560px){
+    .band h1{font-size:24px}.clock .big{font-size:32px}
+    .day{min-height:64px}.tick{width:11px}.clock{align-items:flex-start}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="band">
+  <div class="band-inner">
+    <div class="brand">
+      <span class="eyebrow">Full distance &middot; 3.8 km / 180 km / 42.2 km</span>
+      <h1>Road to Ironman</h1>
+      <span class="phase-pill"><span class="phase-dot" id="phaseDot"></span><span id="phaseName">&mdash;</span></span>
+    </div>
+    <div class="clock">
+      <span class="lab">Race countdown</span>
+      <span class="big" id="countdown">&mdash;<small id="countUnit">days</small></span>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <button class="tab active" id="tabSchedule">Schedule</button>
+    <button class="tab nutri" id="tabNutrition">Nutrition</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ SCHEDULE TAB ============ -->
+  <section class="sched" id="schedView">
+    <div class="stats">
+      <div class="stat"><div class="k">On-plan completion</div><div class="v" id="sCompletion">0%</div><div class="bar"><i id="sBar" style="width:0%"></i></div></div>
+      <div class="stat"><div class="k">Tasks done (through today)</div><div class="v" id="sTasks">0 <small>/ 0</small></div></div>
+      <div class="stat"><div class="k">Current streak</div><div class="v" id="sStreak">0 <small>days</small></div></div>
+      <div class="stat"><div class="k">Weeks into plan</div><div class="v" id="sWeek">&mdash; <small>of 70</small></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="cal">
+        <div class="cal-head">
+          <h2 id="monthLabel">&mdash;</h2>
+          <div class="nav">
+            <button class="btn" id="todayBtn">Today</button>
+            <button class="btn icon" id="prevBtn" aria-label="Previous month">&lsaquo;</button>
+            <button class="btn icon" id="nextBtn" aria-label="Next month">&rsaquo;</button>
+          </div>
+        </div>
+        <div class="dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+        <div class="days" id="days"></div>
+      </div>
+
+      <aside class="panel">
+        <button class="p-close" id="pClose" aria-label="Close">&times;</button>
+        <div class="p-head"><div class="p-date" id="pDate">Select a day</div><div class="p-sub" id="pSub"></div></div>
+        <div class="p-body" id="pBody"></div>
+        <div class="p-foot" id="pFoot" style="display:none"><span class="pct" id="pPct">0%</span><button class="btn" id="markAll">Mark day complete</button></div>
+      </aside>
+    </div>
+
+    <div class="legend">
+      <span class="lg"><span class="d" style="background:var(--swim)"></span>Swim</span>
+      <span class="lg"><span class="d" style="background:var(--bike)"></span>Bike</span>
+      <span class="lg"><span class="d" style="background:var(--run)"></span>Run</span>
+      <span class="lg"><span class="d" style="background:var(--strength)"></span>Strength</span>
+      <span class="lg"><span class="d" style="background:var(--nutrition)"></span>Fuel</span>
+      <span class="lg"><span class="d" style="background:var(--recovery)"></span>Recovery</span>
+    </div>
+
+    <p class="foot-note">
+      <b>Your rhythm:</b> Jun 15&ndash;17 &mdash; run (AM) + cycle (PM). From Jun 18 (coaching starts) &mdash; swim + run (AM), cycle 10&ndash;20 km (PM).
+      From Jul 1 &mdash; cycle-commute + swim (AM), run (PM). Weekends &mdash; longer cycle + run in the morning.
+      Distances grow week-on-week and pull back every 4th (recovery) week. Targets are goals, not pass/fail &mdash; let your WHOOP and your body steer effort, especially with daily running.
+      Ticks save in this browser on this device. General coaching guidance, not medical advice.
+    </p>
+  </section>
+
+  <!-- ============ NUTRITION TAB ============ -->
+  <section class="nut" id="nutView">
+    <h2>Fuelling the engine &mdash; millet-forward, vegetarian, no eggs</h2>
+    <p class="lede">Millets do the heavy lifting for your carbs (and add iron, magnesium and calcium); dairy, legumes, soy and a scoop of protein top up to your <b>120&ndash;140 g protein/day</b>. Carbs are the dial you turn with the day's distance.</p>
+
+    <div class="seclab">Daily targets by day type</div>
+    <div class="cards3">
+      <div class="ncard">
+        <h3>Easy / recovery day</h3>
+        <div class="row"><span>Calories</span><b>2,400&ndash;2,700</b></div>
+        <div class="row"><span>Protein</span><b>120&ndash;130 g</b></div>
+        <div class="row"><span>Carbs (3&ndash;4 g/kg)</span><b>210&ndash;280 g</b></div>
+        <div class="row"><span>Focus</span><b>sleep + protein</b></div>
+      </div>
+      <div class="ncard">
+        <h3>Training day</h3>
+        <div class="row"><span>Calories</span><b>2,900&ndash;3,300</b></div>
+        <div class="row"><span>Protein</span><b>130&ndash;140 g</b></div>
+        <div class="row"><span>Carbs (5&ndash;7 g/kg)</span><b>350&ndash;490 g</b></div>
+        <div class="row"><span>Focus</span><b>recovery shake</b></div>
+      </div>
+      <div class="ncard">
+        <h3>Big day (long ride/run)</h3>
+        <div class="row"><span>Calories</span><b>3,500&ndash;4,500</b></div>
+        <div class="row"><span>Protein</span><b>130&ndash;150 g</b></div>
+        <div class="row"><span>Carbs (8&ndash;10 g/kg)</span><b>560&ndash;700 g</b></div>
+        <div class="row"><span>Focus</span><b>fuel on the move</b></div>
+      </div>
+    </div>
+
+    <div class="seclab">Your millet toolkit</div>
+    <div class="millets">
+      <div class="mcard"><h4>Ragi (finger millet)</h4><p>Your recovery hero &mdash; richest in calcium &amp; iron. Ragi malt/porridge for breakfast and post-workout shakes; ragi dosa/roti.</p></div>
+      <div class="mcard"><h4>Bajra (pearl millet)</h4><p>Iron &amp; magnesium for endurance. Bajra roti and khichdi; great in cooler months and around heavy sessions.</p></div>
+      <div class="mcard"><h4>Jowar (sorghum)</h4><p>Light, versatile staple carb. Jowar roti, upma, or as a rice swap at lunch.</p></div>
+      <div class="mcard"><h4>Foxtail millet</h4><p>Lower-GI, steady energy &mdash; ideal pre-long-ride. Foxtail pulao/upma or a grain bowl base.</p></div>
+      <div class="mcard"><h4>Little / kodo millet</h4><p>Easy rice substitute. Use in khichdi with moong dal for a complete-protein dinner.</p></div>
+      <div class="mcard"><h4>Pair for protein</h4><p>Millets alone are moderate protein &mdash; always pair with dal/rajma, paneer/curd, tofu or a whey/plant scoop to complete the amino profile.</p></div>
+    </div>
+
+    <div class="seclab">Daily meal framework &middot; ~135 g protein training day</div>
+    <div class="meals">
+      <div class="meal"><div class="when">Breakfast</div><div class="what"><b>Ragi porridge / malt</b><p>Ragi cooked in milk (300 ml) + banana + 1 tbsp peanut butter + 20 g whey or 2 tbsp pumpkin/hemp seeds.</p></div><span class="pg">~30 g P</span></div>
+      <div class="meal"><div class="when">Mid-morning</div><div class="what"><b>Curd + nuts + millet ball</b><p>Greek yogurt/curd (150 g) + a handful of almonds + 1 ragi-date energy ball.</p></div><span class="pg">~18 g P</span></div>
+      <div class="meal"><div class="when">Lunch</div><div class="what"><b>Millet bowl + dal + paneer/tofu</b><p>Foxtail/little millet (or 2 bajra/jowar rotis) + dal or rajma (1.5 cups) + paneer/tofu (70 g) + veg + curd + lemon (vit C aids iron).</p></div><span class="pg">~35 g P</span></div>
+      <div class="meal"><div class="when">Pre-workout</div><div class="what"><b>Quick carbs</b><p>Banana + 2&ndash;3 dates, or light ragi malt, 45&ndash;60 min before. (Carb-focused.)</p></div><span class="pg">~5 g P</span></div>
+      <div class="meal"><div class="when">Post-workout</div><div class="what"><b>Ragi-milk recovery shake</b><p>Ragi malt + milk + whey/plant protein + banana, within 30&ndash;60 min of finishing.</p></div><span class="pg">~30 g P</span></div>
+      <div class="meal"><div class="when">Dinner</div><div class="what"><b>Millet khichdi or jowar roti + curry</b><p>Foxtail/little millet + moong dal khichdi (complete protein), or jowar roti + tofu/paneer curry + veg + curd.</p></div><span class="pg">~30 g P</span></div>
+      <div class="meal"><div class="when">Evening (opt.)</div><div class="what"><b>Casein top-up</b><p>Cottage cheese/curd + nuts, or a glass of milk &mdash; useful on hard days.</p></div><span class="pg">~12 g P</span></div>
+    </div>
+
+    <div class="seclab">Fuelling during workouts</div>
+    <table class="fuel">
+      <tr><th>Session</th><th>Carbs / hr</th><th>Fluid / hr</th><th>Sodium / hr</th><th>Millet-friendly sources</th></tr>
+      <tr><td>Short (&lt;20 km bike / &lt;6 km run / &lt;45 min swim)</td><td><b>0</b></td><td>to thirst</td><td>if hot</td><td>Water</td></tr>
+      <tr><td>Medium (60&ndash;120 min)</td><td><b>30&ndash;60 g</b></td><td>500&ndash;750 ml</td><td>300&ndash;700 mg</td><td>Banana, ragi-date ball, sports drink</td></tr>
+      <tr><td>Long (weekend ride/run, &gt;2 h)</td><td><b>60&ndash;90 g</b></td><td>500&ndash;750 ml</td><td>500&ndash;1000 mg</td><td>Ragi malt pre-ride; gels + millet-date balls + banana on the move</td></tr>
+    </table>
+    <p class="foot-note" style="margin-top:12px">Train the gut on the bike &mdash; build from 60 toward 90 g carbs/hr over the weeks. Post-session: ~1&ndash;1.2 g/kg carbs (a millet bowl or ragi malt) + 20&ndash;30 g protein within the hour. Do a sweat test (weigh nude before/after a 1-h session) to set your exact sodium.</p>
+
+    <div class="seclab">Micronutrients &amp; supplements</div>
+    <div class="note-card">
+      <b>Get baseline bloods early</b> (ferritin/iron, B12, vitamin D) &mdash; low iron silently wrecks endurance. Ragi and bajra are iron- and calcium-rich, and pairing iron meals with vitamin C (lemon, citrus) while keeping tea/coffee away from them boosts absorption. Then discuss with a doctor or sports dietitian:
+      <b>B12</b> (sensible to supplement without eggs), <b>vitamin D</b> (if low), <b>omega-3 DHA/EPA</b> (algae-based, or daily flax/chia/walnuts), <b>iron</b> (only if labs are low), and optionally <b>creatine</b> 3&ndash;5 g/day (vegetarians respond well; supports strength &amp; recovery). General guidance, not medical advice.
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // ---------- Config ----------
+  function d(y,m,day){return new Date(y,m-1,day);}
+  var START=d(2026,6,15), FIRST_SWIM=d(2026,6,18), TRAINER=d(2026,6,30), COMMUTE=d(2026,7,1), RACE=d(2027,10,18), TOTAL_WEEKS=70;
+  var PHASES=[
+    {key:'foundation',name:'Foundation & Learn-to-Swim',start:d(2026,6,15),color:'var(--swim)'},
+    {key:'base',name:'Base',start:d(2026,10,5),color:'var(--bike)'},
+    {key:'build',name:'Build',start:d(2027,2,1),color:'var(--strength)'},
+    {key:'peak',name:'Peak / Race-Specific',start:d(2027,5,24),color:'var(--run)'},
+    {key:'taper',name:'Taper & Race',start:d(2027,9,28),color:'var(--race)'}
+  ];
+  var K={swim:'var(--swim)',bike:'var(--bike)',run:'var(--run)',strength:'var(--strength)',mobility:'var(--neutral)',nutrition:'var(--nutrition)',recovery:'var(--recovery)',race:'var(--race)'};
+
+  // ---------- Date helpers ----------
+  function pad(n){return n<10?'0'+n:''+n;}
+  function key(dt){return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());}
+  function addDays(dt,n){var x=new Date(dt);x.setDate(x.getDate()+n);return x;}
+  function midnight(dt){return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());}
+  function diffDays(a,b){return Math.round((midnight(b)-midnight(a))/86400000);}
+  function same(a,b){return key(a)===key(b);}
+  var DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // ---------- Store ----------
+  var SKEY='ironman_progress_v2';
+  function loadStore(){try{return JSON.parse(localStorage.getItem(SKEY))||{};}catch(e){return {};}}
+  function saveStore(s){try{localStorage.setItem(SKEY,JSON.stringify(s));}catch(e){}}
+  var store=loadStore();
+
+  // ---------- Engine ----------
+  function phaseFor(dt){
+    if(diffDays(dt,RACE)<0) return {key:'post'};
+    if(same(dt,RACE)) return {key:'race'};
+    var p=null; for(var i=0;i<PHASES.length;i++){ if(diffDays(PHASES[i].start,dt)>=0) p=PHASES[i]; }
+    if(!p) return {key:'pre'}; return p;
+  }
+  function gweek(dt){ return Math.floor(diffDays(START,dt)/7); }
+  function dist(base,inc,cap,W,mult,round){ var v=Math.min(cap, base+inc*W)*mult; round=round||1; return Math.max(round, Math.round(v/round)*round); }
+  function km(n){return n+' km';}
+  function mtr(n){return n+' m';}
+
+  function intens(pk, quality){
+    if(pk==='foundation') return 'Easy &mdash; technique & aerobic base';
+    if(pk==='base') return 'Steady Zone 2';
+    if(pk==='build') return quality? 'Quality &mdash; tempo/threshold' : 'Zone 2 endurance';
+    if(pk==='peak') return quality? 'Race effort' : 'Zone 2, race-specific';
+    if(pk==='taper') return 'Easy &mdash; stay sharp, legs fresh';
+    return 'Easy';
+  }
+
+  function fuelText(daytype){
+    if(daytype==='easy') return {t:'Easy-day fuelling', x:'Carbs ~280 g (millet-forward) &middot; Protein 125 g &middot; Hydrate. See Nutrition tab.'};
+    if(daytype==='big')  return {t:'Big-day fuelling',  x:'Carbs ~560&ndash;700 g &middot; Protein 140 g &middot; 60&ndash;90 g carbs/hr + sodium in the long session. See Nutrition tab.'};
+    return {t:'Training-day fuelling', x:'Carbs ~400&ndash;450 g &middot; Protein 135 g &middot; Ragi-milk recovery shake within 60 min. See Nutrition tab.'};
+  }
+
+  function buildDay(dt){
+    var p=phaseFor(dt), items=[];
+    if(p.key==='pre') return {kind:'pre', items:[]};
+    if(p.key==='post'){
+      items=[{kind:'recovery',title:'Recover & celebrate',detail:'Easy movement only. You earned this.'}];
+      return finalize(dt,'post','Post-race',false,items);
+    }
+    if(p.key==='race'){
+      items=[
+        {kind:'race',title:'Ironman swim',chip:'3.8 km',detail:'Settle in, sight every few strokes, stay smooth.'},
+        {kind:'race',title:'Ironman bike',chip:'180 km',detail:'Hold race watts/HR. Fuel 60&ndash;90 g carbs/hr as rehearsed.'},
+        {kind:'race',title:'Ironman run',chip:'42.2 km',detail:'Execute your run/walk plan. One aid station at a time.'},
+        {kind:'nutrition',title:'Race-day fuelling',detail:'Nothing new. Carbs + sodium per hour exactly as practised.'},
+        {kind:'recovery',title:'Cross the line',detail:'You are an Ironman.'}
+      ];
+      return finalize(dt,'race','Race Day',false,items);
+    }
+
+    var W=gweek(dt), wd=dt.getDay(), weekend=(wd===0||wd===6);
+    var wInPhase=Math.floor(diffDays(p.start,dt)/7);
+    var rec = (p.key!=='taper') && (wInPhase%4===3);
+    var mult = rec?0.6:1;
+    if(p.key==='taper'){ var wtr=Math.floor(diffDays(dt,RACE)/7); mult = wtr>=2?0.55:(wtr>=1?0.4:0.3); }
+
+    function S(kind,title,chip,detail){ items.push({kind:kind,title:title,chip:chip,detail:detail}); }
+
+    // distances
+    var swimReg=dist(200,60,2500,W,mult,50), swimLong=dist(300,90,3800,W,mult,50);
+    var runWk=dist(5,0.2,12,W,mult,1), runLong=dist(8,0.5,30,W,mult,1);
+    var cycWk=dist(12,0.6,30,W,mult,1), cycLong=dist(40,3,170,W,mult,1);
+    var ec=p.key; // for intensity
+    var roadNote=(diffDays(TRAINER,dt)<0)?' Road ride for now.':'';
+
+    if(weekend){
+      if(wd===6){ // Saturday: long ride + brick run
+        S('bike','AM Long ride', km(cycLong), 'Big endurance ride. '+(ec==='build'||ec==='peak'?'Include sweet-spot/race-effort blocks. ':'')+'Rehearse fuelling.'+roadNote);
+        S('run','AM Brick run', km(dist(4,0.3,12,W,mult,1)), 'Run straight off the bike &mdash; legs will feel odd, keep it easy.');
+      } else { // Sunday: long run + easy ride
+        S('run','AM Long run', km(runLong), 'Longest run of the week (run/walk is fine). '+intens(ec,false)+'.');
+        S('bike','AM Easy ride', km(dist(18,1,55,W,mult,1)), 'Recovery spin, very easy.'+roadNote);
+      }
+    } else if(diffDays(FIRST_SWIM,dt)<0){
+      // Jun 15-17: run AM + cycle PM (no swim yet)
+      S('run','AM Run', km(runWk), 'Easy Zone 2, relaxed.');
+      var c1='Easy ride, 10&ndash;20 km range.'+roadNote;
+      if(same(dt,START)) c1='Day 1 &mdash; your cycling start! Keep it easy and enjoyable. '+c1;
+      S('bike','PM Ride', km(cycWk), c1);
+    } else {
+      // weekday with swimming
+      var longSwimDay=(wd===3), qualityRun=(wd===4 && (ec==='build'||ec==='peak'));
+      var sd = longSwimDay? swimLong : swimReg;
+      var swimDetail = (ec==='foundation')? 'Technique first &mdash; distance is a target, not a must. Rest as needed.' : (longSwimDay?'Long continuous swim &mdash; building toward 3.8 km.':'Steady swim, smooth stroke.');
+      if(diffDays(COMMUTE,dt)<0){
+        // Jun 18 - Jun 30: AM swim + run, PM cycle
+        S('swim','AM Swim', mtr(sd), swimDetail);
+        S('run','AM Run', km(runWk), intens(ec,false)+'.');
+        S('bike','PM Ride', km(cycWk), 'Easy ride, 10&ndash;20 km.'+roadNote);
+      } else {
+        // Jul 1+: AM cycle-commute + swim, PM run
+        S('bike','AM Ride (commute)', km(Math.min(cycWk,18)), 'Cycle to the pool &mdash; counts as your easy ride.'+roadNote);
+        S('swim','AM Swim', mtr(sd), swimDetail);
+        S('run','PM Run', km(runWk), (qualityRun?'Quality &mdash; tempo/threshold.':intens(ec,false)+'.'));
+      }
+      // strength 2x/week (Tue & Fri) -- injury-proofing for daily running
+      if(wd===2||wd===5){
+        S('strength','Strength & mobility','25 min','Gym: single-leg, posterior chain, core, calves & shoulders. Keeps you injury-free under daily running.');
+      }
+    }
+
+    // fuel + recovery
+    var daytype = rec? 'easy' : (weekend? 'big' : 'training');
+    var f=fuelText(daytype);
+    S('nutrition', f.t, null, f.x);
+    S('recovery','Recovery', null, (weekend?'Sleep 8h+ &middot; Hydrate + electrolytes &middot; ':'Sleep 8h+ &middot; ')+'Check WHOOP; ease off if recovery is red.');
+
+    return finalize(dt, p.key, p.name, rec, items);
+  }
+
+  function finalize(dt, pk, pname, rec, items){
+    var k=key(dt); for(var i=0;i<items.length;i++){ items[i].id=k+'#'+i; }
+    return {kind:pk, phaseName:pname, recovery:rec, items:items, key:k};
+  }
+  function dayCompletion(dt){
+    var dp=buildDay(dt); if(!dp.items.length) return {pct:0,done:0,total:0};
+    var done=0; for(var i=0;i<dp.items.length;i++){ if(store[dp.items[i].id]) done++; }
+    return {pct:done/dp.items.length, done:done, total:dp.items.length};
+  }
+
+  // ---------- State ----------
+  var today=midnight(new Date());
+  var inPlan=(diffDays(START,today)>=0 && diffDays(today,RACE)<=0);
+  var view = inPlan? new Date(today.getFullYear(),today.getMonth(),1) : new Date(START.getFullYear(),START.getMonth(),1);
+  var selected = inPlan? new Date(today) : new Date(START);
+
+  // ---------- Calendar ----------
+  var daysEl=document.getElementById('days');
+  function renderCalendar(){
+    document.getElementById('monthLabel').textContent=MON[view.getMonth()]+' '+view.getFullYear();
+    daysEl.innerHTML='';
+    var first=new Date(view.getFullYear(),view.getMonth(),1);
+    var offset=(first.getDay()+6)%7, gridStart=addDays(first,-offset);
+    for(var c=0;c<42;c++){ daysEl.appendChild(cell(addDays(gridStart,c))); }
+  }
+  function cell(dt){
+    var inMonth=dt.getMonth()===view.getMonth(), p=phaseFor(dt);
+    var isEmpty=(p.key==='pre'||p.key==='post');
+    var b=document.createElement(isEmpty?'div':'button');
+    b.className='day'; if(!inMonth) b.classList.add('out');
+    if(isEmpty) b.classList.add('out','empty');
+    if(p.key==='race') b.classList.add('race');
+    if(same(dt,today)) b.classList.add('today');
+    if(same(dt,selected)) b.classList.add('sel');
+    var num=document.createElement('div'); num.className='dnum'; num.textContent=dt.getDate(); b.appendChild(num);
+    if(!isEmpty){
+      var dp=buildDay(dt), comp=dayCompletion(dt);
+      var ring=document.createElement('div'); ring.className='ring';
+      if(comp.total>0&&comp.done===comp.total){ ring.classList.add('done'); ring.style.background='var(--good)'; }
+      else{ ring.style.background='conic-gradient(var(--good) '+Math.round(comp.pct*360)+'deg, var(--ring-empty) 0)'; var inner=document.createElement('i'); ring.appendChild(inner); }
+      b.appendChild(ring);
+      if(p.key==='race'){ var rl=document.createElement('div'); rl.className='rlabel'; rl.textContent='RACE'; b.appendChild(rl); }
+      var seen={}, order=['swim','bike','run','strength'], ticks=document.createElement('div'); ticks.className='ticks';
+      for(var i=0;i<dp.items.length;i++){ var kd=dp.items[i].kind; if(order.indexOf(kd)>=0&&!seen[kd]){ seen[kd]=1; var t=document.createElement('span'); t.className='tick'; t.style.background=K[kd]; ticks.appendChild(t); } }
+      b.appendChild(ticks);
+      (function(d2){ b.addEventListener('click',function(){ selected=new Date(d2); document.body.classList.add('panel-open'); renderAll(); }); })(dt);
+    }
+    return b;
+  }
+
+  // ---------- Panel ----------
+  function renderPanel(){
+    var dp=buildDay(selected);
+    var pHead=document.getElementById('pDate'), pSub=document.getElementById('pSub'), pBody=document.getElementById('pBody'), pFoot=document.getElementById('pFoot');
+    pHead.innerHTML=DOW[selected.getDay()]+' &middot; '+selected.getDate()+' '+MON[selected.getMonth()].slice(0,3)+' '+selected.getFullYear();
+    pSub.innerHTML=''; pBody.innerHTML='';
+    if(dp.kind==='pre'){ pBody.innerHTML='<div class="empty-note">Your plan starts <b>Mon 15 Jun 2026</b>.</div>'; pFoot.style.display='none'; return; }
+    var pn=dp.phaseName||'Plan', color=(phaseFor(selected).color)||'var(--ink)';
+    pSub.appendChild(badge(pn,color));
+    if(dp.recovery) pSub.appendChild(badge('Recovery week','',true));
+    var groups=[['Sessions',['swim','bike','run','strength','race']],['Fuel',['nutrition']],['Recovery',['recovery']]];
+    for(var g=0;g<groups.length;g++){
+      var mem=dp.items.filter(function(it){return groups[g][1].indexOf(it.kind)>=0;});
+      if(!mem.length) continue;
+      var gl=document.createElement('div'); gl.className='grp'; gl.textContent=groups[g][0]; pBody.appendChild(gl);
+      mem.forEach(function(it){ pBody.appendChild(itemRow(it)); });
+    }
+    var comp=dayCompletion(selected);
+    document.getElementById('pPct').textContent=comp.total?Math.round(comp.pct*100)+'%':'—';
+    pFoot.style.display='flex';
+  }
+  function badge(text,color,warn){ var b=document.createElement('span'); b.className='badge'+(warn?' warn':''); if(color){ var dd=document.createElement('span'); dd.className='d'; dd.style.background=color; b.appendChild(dd);} b.appendChild(document.createTextNode(text)); return b; }
+  function itemRow(it){
+    var row=document.createElement('label'); row.className='item'+(store[it.id]?' checked':'');
+    var cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk'; cb.checked=!!store[it.id];
+    cb.addEventListener('change',function(){ if(cb.checked) store[it.id]=true; else delete store[it.id]; saveStore(store); row.classList.toggle('checked',cb.checked); renderCalendar(); renderStats(); var c=dayCompletion(selected); document.getElementById('pPct').textContent=c.total?Math.round(c.pct*100)+'%':'—'; });
+    var main=document.createElement('div'); main.className='it-main';
+    var title=document.createElement('div'); title.className='it-title';
+    var dot=document.createElement('span'); dot.className='kdot'; dot.style.background=K[it.kind]||'var(--ink)'; title.appendChild(dot);
+    title.appendChild(document.createTextNode(it.title));
+    if(it.chip){ var c=document.createElement('span'); c.className='it-chip'; c.textContent=it.chip; title.appendChild(c); }
+    var det=document.createElement('div'); det.className='it-detail'; det.innerHTML=it.detail;
+    main.appendChild(title); main.appendChild(det);
+    row.appendChild(cb); row.appendChild(main); return row;
+  }
+
+  // ---------- Stats ----------
+  function renderStats(){
+    var p=phaseFor(today);
+    var pn=(p.key==='pre')?'Pre-season':(p.key==='post')?'Post-race':(p.key==='race')?'Race Day':p.name;
+    document.getElementById('phaseName').textContent=pn;
+    document.getElementById('phaseDot').style.background=(p.color)||'#7E8AA0';
+    var dleft=diffDays(today,RACE), cd=document.getElementById('countdown'), cu=document.getElementById('countUnit');
+    if(dleft>0){ cd.firstChild.textContent=dleft; cu.textContent=dleft===1?' day':' days'; }
+    else if(dleft===0){ cd.firstChild.textContent='RACE'; cu.textContent=' day'; }
+    else { cd.firstChild.textContent='Done'; cu.textContent=''; }
+    var done=0,total=0, cur=new Date(START), lastDay=diffDays(today,RACE)<0?RACE:today, guard=0;
+    while(diffDays(cur,lastDay)>=0 && guard<900){ var c=dayCompletion(cur); done+=c.done; total+=c.total; cur=addDays(cur,1); guard++; }
+    document.getElementById('sTasks').innerHTML=done+' <small>/ '+total+'</small>';
+    var pct=total?Math.round(done/total*100):0;
+    document.getElementById('sCompletion').textContent=pct+'%'; document.getElementById('sBar').style.width=pct+'%';
+    var streak=0, start=new Date(today), sc=dayCompletion(start);
+    if(sc.total>0 && sc.done!==sc.total) start=addDays(start,-1);
+    var g2=0; while(diffDays(START,start)>=0 && g2<900){ var cc=dayCompletion(start); if(cc.total>0&&cc.done===cc.total){ streak++; start=addDays(start,-1); } else break; g2++; }
+    document.getElementById('sStreak').innerHTML=streak+' <small>day'+(streak===1?'':'s')+'</small>';
+    var wk=Math.floor(diffDays(START,today)/7)+1; if(wk<1) wk=0; if(wk>TOTAL_WEEKS) wk=TOTAL_WEEKS;
+    document.getElementById('sWeek').innerHTML=wk+' <small>of '+TOTAL_WEEKS+'</small>';
+  }
+
+  function renderAll(){ renderCalendar(); renderPanel(); renderStats(); }
+
+  // ---------- Tabs ----------
+  var tS=document.getElementById('tabSchedule'), tN=document.getElementById('tabNutrition'),
+      vS=document.getElementById('schedView'), vN=document.getElementById('nutView');
+  function showTab(which){
+    var sched=which==='schedule';
+    tS.classList.toggle('active',sched); tN.classList.toggle('active',!sched);
+    vS.classList.toggle('hide',!sched); vN.classList.toggle('active',!sched);
+    if(!sched) document.body.classList.remove('panel-open');
+  }
+  tS.onclick=function(){ showTab('schedule'); };
+  tN.onclick=function(){ showTab('nutrition'); };
+
+  // ---------- Events ----------
+  document.getElementById('prevBtn').onclick=function(){ view=new Date(view.getFullYear(),view.getMonth()-1,1); renderCalendar(); };
+  document.getElementById('nextBtn').onclick=function(){ view=new Date(view.getFullYear(),view.getMonth()+1,1); renderCalendar(); };
+  document.getElementById('todayBtn').onclick=function(){ view=new Date(today.getFullYear(),today.getMonth(),1); if(diffDays(START,today)>=0&&diffDays(today,RACE)<=0){ selected=new Date(today); document.body.classList.add('panel-open'); } renderAll(); };
+  document.getElementById('pClose').onclick=function(){ document.body.classList.remove('panel-open'); };
+  document.getElementById('markAll').onclick=function(){ var dp=buildDay(selected); if(!dp.items.length) return; var allDone=dp.items.every(function(it){return store[it.id];}); dp.items.forEach(function(it){ if(allDone) delete store[it.id]; else store[it.id]=true; }); saveStore(store); renderAll(); };
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

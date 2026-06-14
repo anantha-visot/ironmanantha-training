@@ -1,0 +1,5 @@
+# Netlify configuration — publishes the repo root as a static site.
+[build]
+  publish = "."
+
+# Single-page app: no build command needed (plain static HTML).
