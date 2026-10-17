@@ -1,7 +1,7 @@
 name: Build APK
 on:
   push:
-    branches: [main]
+    branches: [pulse-caller-app]
   workflow_dispatch:
 permissions:
   contents: write
@@ -24,6 +24,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk PulseCaller.apk
-          gh release create "v1.${{ github.run_number }}" PulseCaller.apk \
+          gh release create "pulse-v1.${{ github.run_number }}" PulseCaller.apk --target "${{ github.sha }}" \
             --title "Pulse Caller build ${{ github.run_number }}" \
-            --notes "Open this page on your Android phone and tap PulseCaller.apk to install." --latest
+            --notes "Open this page on your Android phone and tap PulseCaller.apk to install." --latest=false

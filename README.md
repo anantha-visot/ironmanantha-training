@@ -7,4 +7,4 @@ Bluetooth heart-rate strap, and speaks it through your earphones — with the ap
 - Zone alerts when you stay above/below your zone, plus "back in zone"
 - Runs as a foreground service with an ongoing notification (Stop button there)
 
-Every push to `main` builds an APK and publishes it under **Releases**.
+Every push to the `pulse-caller-app` branch builds an APK and publishes it under **Releases**.
